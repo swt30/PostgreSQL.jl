@@ -1,8 +1,10 @@
+import Compat: Libc, @static, is_windows
+
 function Base.connect(::Type{Postgres},
-                      host::AbstractString="",
-                      user::AbstractString="",
-                      passwd::AbstractString="",
-                      db::AbstractString="",
+                      host::AbstractString,
+                      user::AbstractString,
+                      passwd::AbstractString,
+                      db::AbstractString,
                       port::AbstractString="")
     conn = PQsetdbLogin(host, port, C_NULL, C_NULL, db, user, passwd)
     status = PQstatus(conn)
@@ -87,16 +89,15 @@ function checkerrclear(result::Ptr{PGresult})
 end
 
 escapeliteral(db::PostgresDatabaseHandle, value) = value
-escapeliteral(db::PostgresDatabaseHandle, value::AbstractString) = escapeliteral(db, unsafe_string(value))
 
-function escapeliteral(db::PostgresDatabaseHandle, value::String)
+function escapeliteral(db::PostgresDatabaseHandle, value::AbstractString)
     strptr = PQescapeLiteral(db.ptr, value, sizeof(value))
     str = unsafe_string(strptr)
     PQfreemem(strptr)
     return str
 end
 
-function escapeidentifier(db::PostgresDatabaseHandle, value::String)
+function escapeidentifier(db::PostgresDatabaseHandle, value::AbstractString)
     strptr = PQescapeIdentifier(db.ptr, value, sizeof(value))
     str = unsafe_string(strptr)
     PQfreemem(strptr)
@@ -129,11 +130,11 @@ function copy_from(db::PostgresDatabaseHandle, table::AbstractString,
     return checkerrclear(PQgetResult(db.ptr))
 end
 
-hashsql(sql::AbstractString) = unsafe_string(string("__", hash(sql), "__"))
+hashsql(sql::AbstractString) = String(string("__", hash(sql), "__"))
 
 function getparamtypes(result::Ptr{PGresult})
     nparams = PQnparams(result)
-    return @compat [pgtype(OID{Int(PQparamtype(result, i-1))}) for i = 1:nparams]
+    return [pgtype(OID{Int(PQparamtype(result, i-1))}) for i = 1:nparams]
 end
 
 LIBC = @static is_windows() ? "msvcrt.dll" : :libc
@@ -279,9 +280,9 @@ function unsafe_fetchrow(result::PostgresResultHandle, rownum::Integer)
 end
 
 function unsafe_fetchcol_dataarray(result::PostgresResultHandle, colnum::Integer)
-    return @data([PQgetisnull(result.ptr, i, colnum) == 1 ? NA :
+    return Any[PQgetisnull(result.ptr, i, colnum) == 1 ? NA :
             jldata(result.types[colnum+1], PQgetvalue(result.ptr, i, colnum))
-            for i = 0:(PQntuples(result.ptr)-1)])
+            for i = 0:(PQntuples(result.ptr)-1)]
 end
 
 function DBI.fetchall(result::PostgresResultHandle)

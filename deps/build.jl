@@ -1,5 +1,5 @@
 using BinDeps
-using Compat
+import Compat: @static, is_apple
 
 @BinDeps.setup
 
