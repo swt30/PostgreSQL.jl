@@ -210,7 +210,7 @@ module libpq_interface
     @c Void PQinitSSL (Cint,) libpq
     @c Void PQinitOpenSSL (Cint, Cint) libpq
     @c PGVerbosity PQsetErrorVerbosity (Ptr{PGconn}, PGVerbosity) libpq
-    typealias FILE Void
+    const FILE = Void
     @c Void PQtrace (Ptr{PGconn}, Ptr{FILE}) libpq
     @c Void PQuntrace (Ptr{PGconn},) libpq
     @c PQnoticeReceiver PQsetNoticeReceiver (Ptr{PGconn}, PQnoticeReceiver, Ptr{Void}) libpq
