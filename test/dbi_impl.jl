@@ -17,7 +17,7 @@ function test_dbi()
 
     iterresults = Vector{Any}[]
     for row in result
-        @test row[1] === @compat Int64(1)
+        @test row[1] === Int64(1)
         @test_approx_eq row[2] 2.0
         @test typeof(row[2]) == Float64
         @test row[3] == "foo"

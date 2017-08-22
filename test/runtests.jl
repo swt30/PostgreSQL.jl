@@ -1,12 +1,7 @@
 using DBI
 using Compat
 using PostgreSQL
-if VERSION >= v"0.5"
-  using Base.Test
-else
-  using BaseTestNext
-  const Test = BaseTestNext
-end
+using Base.Test
 
 include("testutils.jl")
 @testset "Main" begin

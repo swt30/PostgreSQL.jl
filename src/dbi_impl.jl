@@ -216,8 +216,8 @@ function DBI.execute(stmt::PostgresStatementHandle, params::Vector)
     return stmt.result = PostgresResultHandle(result)
 end
 
-function executemany{T<:AbstractVector}(stmt::PostgresStatementHandle,
-        params::Union{DataFrame,AbstractVector{T}})
+function executemany(stmt::PostgresStatementHandle,
+        params::Union{DataFrame,AbstractVector{T}}) where T<:AbstractVector
     nparams = isa(params, DataFrame) ? ncol(params) : length(params[1])
 
     if nparams > 0 && isempty(stmt.paramtypes)
