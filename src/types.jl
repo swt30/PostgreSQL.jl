@@ -1,16 +1,16 @@
 import JSON
 import Compat: Libc, unsafe_convert, parse, @compat, String, unsafe_string
 
-@compat abstract type AbstractPostgresType end
-type PostgresType{Name} <: AbstractPostgresType end
+abstract type AbstractPostgresType end
+mutable struct PostgresType{Name} <: AbstractPostgresType end
 
-@compat abstract type AbstractOID end
-type OID{N} <: AbstractOID end
+abstract type AbstractOID end
+mutable struct OID{N} <: AbstractOID end
 
-oid{T<:AbstractPostgresType}(t::Type{T}) = convert(OID, t)
+oid(t::Type{T}) where {T<:AbstractPostgresType} = convert(OID, t)
 pgtype(t::Type) = convert(PostgresType, t)
 
-Base.convert{T}(::Type{Oid}, ::Type{OID{T}}) = convert(Oid, T)
+Base.convert(::Type{Oid}, ::Type{OID{T}}) where {T} = convert(Oid, T)
 
 function newpgtype(pgtypename, oid, jltypes)
     Base.convert(::Type{OID}, ::Type{PostgresType{pgtypename}}) = OID{oid}
@@ -179,11 +179,11 @@ function pgdata(::Type{PostgresType{:unknown}}, ptr::Ptr{UInt8}, data)
     ptr = storestring!(ptr, string(data))
 end
 
-function pgdata{T<:AbstractString}(::Type{PostgresType{:json}}, ptr::Ptr{UInt8}, data::Dict{T,Any})
+function pgdata(::Type{PostgresType{:json}}, ptr::Ptr{UInt8}, data::Dict{T,Any}) where T<:AbstractString
     ptr = storestring!(ptr, String(JSON.json(data)))
 end
 
-function pgdata{T<:AbstractString}(::Type{PostgresType{:jsonb}}, ptr::Ptr{UInt8}, data::Dict{T,Any})
+function pgdata(::Type{PostgresType{:jsonb}}, ptr::Ptr{UInt8}, data::Dict{T,Any}) where T<:AbstractString
     ptr = storestring!(ptr, String(JSON.json(data)))
 end
 
@@ -220,9 +220,9 @@ function pgdata(::Type{PostgresType{:_text}}, ptr::Ptr{UInt8}, data::Vector{Stri
 end
 
 # dbi
-@compat abstract type Postgres<:DBI.DatabaseSystem end
+abstract type Postgres<:DBI.DatabaseSystem end
 
-type PostgresDatabaseHandle <: DBI.DatabaseHandle
+mutable struct PostgresDatabaseHandle <: DBI.DatabaseHandle
     ptr::Ptr{PGconn}
     status::ConnStatusType
     closed::Bool
@@ -232,7 +232,7 @@ type PostgresDatabaseHandle <: DBI.DatabaseHandle
     end
 end
 
-type PostgresResultHandle
+mutable struct PostgresResultHandle
     ptr::Ptr{PGresult}
     types::Vector{DataType}
     nrows::Integer
@@ -242,7 +242,7 @@ end
 function PostgresResultHandle(result::Ptr{PGresult})
     status = PQresultStatus(result)
     if status == PGRES_TUPLES_OK || status == PGRES_SINGLE_TUPLE
-        oids = @compat [OID{Int(PQftype(result, col))} for col in 0:(PQnfields(result)-1)]
+        oids = [OID{Int(PQftype(result, col))} for col in 0:(PQnfields(result)-1)]
         types = DataType[convert(PostgresType, x) for x in oids]
     else
         types = DataType[]
@@ -250,7 +250,7 @@ function PostgresResultHandle(result::Ptr{PGresult})
     return PostgresResultHandle(result, types, PQntuples(result), PQnfields(result))
 end
 
-type PostgresStatementHandle <: DBI.StatementHandle
+mutable struct PostgresStatementHandle <: DBI.StatementHandle
     db::PostgresDatabaseHandle
     stmt::AbstractString
     executed::Int

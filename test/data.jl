@@ -2,7 +2,7 @@ import Compat: Libc, @compat
 
 function test_numerics()
     PostgresType = PostgreSQL.PostgresType
-    values = @compat Any[Int16(4), Int32(4), Int64(4), Float32(4), Float64(4)]
+    values = Any[Int16(4), Int32(4), Int64(4), Float32(4), Float64(4)]
 
     types = [PostgresType{:int2}, PostgresType{:int4}, PostgresType{:int8},
         PostgresType{:float4}, PostgresType{:float8}]
@@ -62,7 +62,7 @@ end
 function test_json()
     PGType = PostgreSQL.PostgresType
     for typ in Any[PGType{:json}, PGType{:jsonb}]
-        dict1 = @compat Dict("bobr dobr" => [1, 2, 3], "foo" => 3.0)
+        dict1 = Dict("bobr dobr" => [1, 2, 3], "foo" => 3.0)
         p = PostgreSQL.pgdata(typ, convert(Ptr{UInt8}, C_NULL), dict1)
         try
             dict2 = PostgreSQL.jldata(typ, p)
