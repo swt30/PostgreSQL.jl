@@ -75,9 +75,15 @@ function decode_bytea_hex(s::AbstractString)
     return hex2bytes(s[3:end])
 end
 
-jldata(::Type{PostgresType{:date}}, ptr::Ptr{UInt8}) = unsafe_string(ptr)
+jldata(::Type{PostgresType{:date}}, ptr::Ptr{UInt8}) = Date(unsafe_string(ptr))
 
-jldata(::Type{PostgresType{:timestamp}}, ptr::Ptr{UInt8}) = unsafe_string(ptr)
+truncate_pg_timestring(s) = s[1:min(sizeof(s),23)]
+const pg_dateformat = Dates.DateFormat("yyyy-mm-dd HH:MM:SS.s")
+function jldata(::Type{PostgresType{:timestamp}}, ptr::Ptr{UInt8})
+    s = unsafe_string(ptr)
+    tr_s = truncate_pg_timestring(s)
+    DateTime(tr_s, pg_dateformat)
+end
 
 jldata(::Type{PostgresType{:timestamptz}}, ptr::Ptr{UInt8}) = unsafe_string(ptr)
 
